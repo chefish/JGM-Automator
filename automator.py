@@ -43,15 +43,41 @@ class Automator:
             # 判断是否可完成任务
             self.check_task()
             # 判断是否需要扫货
-            self.check_goods()
+            try:
+                self.check_goods()
+            except:
+                pass
 
             # 简单粗暴的方式，处理 “XX之光” 的荣誉显示。
             # 不管它出不出现，每次都点一下 确定 所在的位置
             self.d.click(550/1080, 1650/1920)
-            self.upgrade(self.upgrade_list)
+            try:
+                self.upgrade(self.upgrade_list)
+            except TypeError as identifier:
+                logging.error("type error when upgrade")
             # 滑动屏幕，收割金币。
             self.swipe()
             self.open_red_bags()
+            self.autoRestartWhen12()
+
+
+
+
+    def autoRestartWhen12(self):
+        hour = time.localtime().tm_hour
+        minute = time.localtime().tm_min
+        sec = time.localtime().tm_sec
+        # logging.info(f'now time is  {hour}, {minute},{sec}')
+        if hour == 23 :
+            if minute == 59:
+                logging.info(" 23:59 come on we should restart")
+                self.d.app_stop("com.tencent.jgm")
+                logging.info("[%s] Reset app."%time.asctime())
+                time.sleep(120)
+                logging.info("sleep 30s")
+                # 重新启动app
+                self.d.app_start("com.tencent.jgm")  
+
 
     def upgrade(self, upgrade_list):
         if not len(upgrade_list):
@@ -86,7 +112,7 @@ class Automator:
             logging.info(pos_id)
             if pos_id != 0 and pos_id in building_filter:
                 # 搬5次
-                self._move_good_by_id(good, BUILDING_POSITIONS[pos_id], times=4)
+                self._move_good_by_id(good, BUILDING_POSITIONS[pos_id], times=2)
                 short_wait()
       
     def guess_good(self, good_id):
@@ -105,6 +131,8 @@ class Automator:
         h,w = len(screen_before),len(screen_before[0])
         x,y = (location[0] * w,location[1] *h)
         # 按下
+        logging.info(f'device1240 screen size {x}, {y}')
+
         self.d.touch.down(x,y)
         # logging.info('[%s]Tapped'%time.asctime())
         time.sleep(pressed_time)
@@ -160,7 +188,7 @@ class Automator:
     def check_goods(self):
         if not self.auto_goods:
             return
-	# 判断货物那个叉叉是否出现
+    # 判断货物那个叉叉是否出现
         good_id = self._has_good()
         if len(good_id) > 0:
             logging.info("[%s] Train come."%time.asctime())
@@ -178,7 +206,11 @@ class Automator:
             time.sleep(2)
             # 重新启动app
             self.d.app_start("com.tencent.jgm")
+            logging.info("[%s] start app."%time.asctime())
+
             time.sleep(15)
+
+        
         
     def open_red_bags(self):
         if not self.auto_red_bag:
